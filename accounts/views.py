@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate, login
 from django.shortcuts import redirect, render
 from .models import Profile
+from django.contrib.auth import logout
 
 def login_view(request):
     error = None
@@ -32,3 +33,11 @@ def login_view(request):
                     return redirect("lecturer_home")
 
     return render(request, "auth/login.html", {"error": error})
+# accounts/views.py
+
+# ... (login_view is above this) ...
+# accounts/views.py
+def logout_view(request):
+    logout(request)
+    # Redirects back to the login page (the URL name for login_view)
+    return redirect('login_view')
