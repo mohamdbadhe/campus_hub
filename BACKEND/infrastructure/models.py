@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models  # השורה הזו חסרה!
 
 class Lab(models.Model):
     name = models.CharField(max_length=100)
@@ -8,3 +8,19 @@ class Lab(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.location})"
+
+class Alert(models.Model):
+    ALERT_TYPES = [
+        ('INFO', 'Information'),
+        ('WARNING', 'Warning'),
+        ('URGENT', 'Urgent'),
+    ]
+    
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    alert_type = models.CharField(max_length=10, choices=ALERT_TYPES, default='INFO')
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"[{self.alert_type}] {self.title}"

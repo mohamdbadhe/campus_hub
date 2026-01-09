@@ -1,10 +1,12 @@
 from django.http import JsonResponse
-from .models import Lab
+from .models import Lab, Alert
 
-def library_status(request):
-    # כאן תהיה הלוגיקה של US-1
-    return JsonResponse({"status": "Coming soon"})
-
-def available_labs(request):
-    labs = list(Lab.objects.filter(is_available=True).values('name', 'location', 'capacity'))
+def lab_list(request):
+    # מחזיר את רשימת המעבדות
+    labs = list(Lab.objects.all().values())
     return JsonResponse(labs, safe=False)
+
+def get_alerts(request):
+    # מחזיר את ההתראות הפעילות
+    alerts = list(Alert.objects.filter(is_active=True).values())
+    return JsonResponse(alerts, safe=False)
