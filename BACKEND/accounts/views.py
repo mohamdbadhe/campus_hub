@@ -42,9 +42,9 @@ def _user_to_dict(user):
         "id": user.id,
         "email": user.email,
         "username": user.username,
-        "role": prof.role,
-        "department": prof.department,
-        "manager_type": prof.manager_type,
+        "role": prof.role or "student",
+        "department": prof.department or "",
+        "manager_type": prof.manager_type or None,
     }
 
 
@@ -53,21 +53,27 @@ def register(request):
     if request.method != "POST":
         return JsonResponse({"message": "Method not allowed"}, status=405)
 
-    body = _get_body(request)
-    email = (body.get("email") or "").strip().lower()
-    password = body.get("password") or ""
+    try:
+        body = _get_body(request)
+        email = (body.get("email") or "").strip().lower()
+        password = body.get("password") or ""
 
-    if not email or not password:
-        return JsonResponse({"message": "Email and password are required"}, status=400)
+        if not email or not password:
+            return JsonResponse({"message": "Email and password are required"}, status=400)
 
-    if User.objects.filter(username=email).exists():
-        return JsonResponse({"message": "User already exists"}, status=400)
+        if User.objects.filter(username=email).exists():
+            return JsonResponse({"message": "User already exists"}, status=400)
 
-    user = User.objects.create_user(username=email, email=email, password=password)
-    Profile.objects.get_or_create(user=user)
+        user = User.objects.create_user(username=email, email=email, password=password)
+        Profile.objects.get_or_create(user=user)
 
-    token = create_token(user)
-    return JsonResponse({"token": token, "user": _user_to_dict(user)}, status=201)
+        token = create_token(user)
+        return JsonResponse({"token": token, "user": _user_to_dict(user)}, status=201)
+    except Exception as e:
+        import traceback
+        print(f"Registration error: {e}")
+        print(traceback.format_exc())
+        return JsonResponse({"message": f"Server error: {str(e)}"}, status=500)
 
 
 @csrf_exempt

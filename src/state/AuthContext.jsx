@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext(null);
 
-// Use environment variable for deployed backend, or Vite proxy for local dev
+// Use environment variable for deployed backend, or empty string to use Vite proxy in dev
 const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "" : "http://127.0.0.1:8000");
 
 export function AuthProvider({ children }) {
@@ -142,28 +142,20 @@ export function AuthProvider({ children }) {
   const register = async (email, password) => {
     try {
       console.log('Attempting registration:', email);
-      console.log('API_BASE:', API_BASE || '(using proxy)');
+      console.log('API_BASE:', API_BASE || '(using Vite proxy)');
       const url = API_BASE ? `${API_BASE}/api/auth/register` : '/api/auth/register';
       console.log('Request URL:', url);
-      
-      // First, test if backend is reachable
-      try {
-        const testUrl = API_BASE ? `${API_BASE}/api/test` : '/api/test';
-        const testResponse = await fetch(testUrl, { method: 'GET' });
-        console.log('Backend connectivity test:', testResponse.ok ? 'OK' : 'FAILED');
-        if (!testResponse.ok) {
-          throw new Error('Backend test failed');
-        }
-      } catch (testError) {
-        console.error('Backend not reachable:', testError);
-        throw new Error('Cannot connect to server. Make sure the backend is running on http://127.0.0.1:8000');
-      }
       
       const response = await fetch(url, {
         method: "POST",
         mode: "cors",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ email, password }),
+      }).catch((fetchError) => {
+        console.error('Fetch error:', fetchError);
+        throw new Error(`Network error: ${fetchError.message}. Make sure the backend is running on http://127.0.0.1:8000`);
       });
 
       console.log('Response status:', response.status);
@@ -191,7 +183,7 @@ export function AuthProvider({ children }) {
       return data;
     } catch (e) {
       console.error('Registration error:', e);
-      if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
+      if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError') || e.message.includes('fetch') || e.message.includes('Network error')) {
         throw new Error('Cannot connect to server. Make sure the backend is running on http://127.0.0.1:8000');
       }
       throw e;
