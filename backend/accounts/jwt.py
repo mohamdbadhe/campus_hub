@@ -8,7 +8,11 @@ def create_token(user):
         "exp": datetime.utcnow() + timedelta(days=7),
         "iat": datetime.utcnow(),
     }
-    return jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
+    token = jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
+    # Ensure token is a string (not bytes)
+    if isinstance(token, bytes):
+        return token.decode('utf-8')
+    return token
 
 def decode_token(token):
     return jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])

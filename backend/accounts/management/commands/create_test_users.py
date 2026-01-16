@@ -2,98 +2,44 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from accounts.models import Profile
 
-
 class Command(BaseCommand):
-    help = 'Creates test users for admin, student, and lecturer'
+    help = 'Creates test users for development'
 
     def handle(self, *args, **options):
-        # Create Admin
-        admin_email = 'admin@campus.edu'
-        admin_password = 'admin123'
-        if not User.objects.filter(username=admin_email).exists():
-            admin_user = User.objects.create_user(
-                username=admin_email,
-                email=admin_email,
-                password=admin_password
-            )
-            admin_profile, _ = Profile.objects.get_or_create(user=admin_user)
-            admin_profile.role = 'admin'
-            admin_profile.save()
-            self.stdout.write(
-                self.style.SUCCESS(f'Created Admin: {admin_email} / {admin_password}')
-            )
-        else:
-            self.stdout.write(
-                self.style.WARNING(f'Admin user {admin_email} already exists')
-            )
+        test_users = [
+            {'email': 'admin@campus.edu', 'password': 'admin123', 'role': 'admin'},
+            {'email': 'student@campus.edu', 'password': 'student123', 'role': 'student'},
+            {'email': 'lecturer@campus.edu', 'password': 'lecturer123', 'role': 'lecturer'},
+            {'email': 'manager@campus.edu', 'password': 'manager123', 'role': 'manager'},
+        ]
 
-        # Create Student
-        student_email = 'student@campus.edu'
-        student_password = 'student123'
-        if not User.objects.filter(username=student_email).exists():
-            student_user = User.objects.create_user(
-                username=student_email,
-                email=student_email,
-                password=student_password
-            )
-            student_profile, _ = Profile.objects.get_or_create(user=student_user)
-            student_profile.role = 'student'
-            student_profile.save()
-            self.stdout.write(
-                self.style.SUCCESS(f'Created Student: {student_email} / {student_password}')
-            )
-        else:
-            self.stdout.write(
-                self.style.WARNING(f'Student user {student_email} already exists')
-            )
+        for user_data in test_users:
+            email = user_data['email']
+            password = user_data['password']
+            role = user_data['role']
 
-        # Create Lecturer (approved)
-        lecturer_email = 'lecturer@campus.edu'
-        lecturer_password = 'lecturer123'
-        if not User.objects.filter(username=lecturer_email).exists():
-            lecturer_user = User.objects.create_user(
-                username=lecturer_email,
-                email=lecturer_email,
-                password=lecturer_password
-            )
-            lecturer_profile, _ = Profile.objects.get_or_create(user=lecturer_user)
-            lecturer_profile.role = 'lecturer'
-            lecturer_profile.save()
-            self.stdout.write(
-                self.style.SUCCESS(f'Created Lecturer: {lecturer_email} / {lecturer_password}')
-            )
-        else:
-            self.stdout.write(
-                self.style.WARNING(f'Lecturer user {lecturer_email} already exists')
-            )
+            if User.objects.filter(username=email).exists():
+                self.stdout.write(self.style.WARNING(f'User {email} already exists'))
+                user = User.objects.get(username=email)
+            else:
+                user = User.objects.create_user(username=email, email=email, password=password)
+                self.stdout.write(self.style.SUCCESS(f'Created user: {email}'))
+            
+            # Update admin privileges
+            if role == 'admin':
+                user.is_staff = True
+                user.is_superuser = True
+                user.save()
 
-        # Create Manager (approved)
-        manager_email = 'manager@campus.edu'
-        manager_password = 'manager123'
-        if not User.objects.filter(username=manager_email).exists():
-            manager_user = User.objects.create_user(
-                username=manager_email,
-                email=manager_email,
-                password=manager_password
-            )
-            manager_profile, _ = Profile.objects.get_or_create(user=manager_user)
-            manager_profile.role = 'manager'
-            manager_profile.save()
-            self.stdout.write(
-                self.style.SUCCESS(f'Created Manager: {manager_email} / {manager_password}')
-            )
-        else:
-            self.stdout.write(
-                self.style.WARNING(f'Manager user {manager_email} already exists')
-            )
+            # Always update profile role to ensure it's correct
+            profile, created = Profile.objects.get_or_create(user=user)
+            profile.role = role
+            profile.save()
+            self.stdout.write(self.style.SUCCESS(f'  Role set to: {role}'))
 
-        self.stdout.write(
-            self.style.SUCCESS('\nAll test users created!')
-        )
+        self.stdout.write(self.style.SUCCESS('\nAll test users created!'))
         self.stdout.write('\nLogin Credentials:')
         self.stdout.write('=' * 50)
-        self.stdout.write(f'Admin:    {admin_email}    / {admin_password}')
-        self.stdout.write(f'Student:  {student_email}  / {student_password}')
-        self.stdout.write(f'Lecturer: {lecturer_email} / {lecturer_password}')
-        self.stdout.write(f'Manager:  {manager_email}  / {manager_password}')
+        for user_data in test_users:
+            self.stdout.write(f'{user_data["role"].capitalize():10} {user_data["email"]:25} / {user_data["password"]}')
         self.stdout.write('=' * 50)
